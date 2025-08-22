@@ -1,4 +1,5 @@
 describe('Send Email Queueing Test', () => {
+
   beforeEach(() => {
     cy.getAuthToken().as('token');
   });
@@ -10,6 +11,9 @@ describe('Send Email Queueing Test', () => {
       body: "Thanks for signing up."
     }).then((res) => {
       expect(res.status).to.eq(202);
+      expect(res.body).to.have.property('isSuccessful', true);
+      expect(res.body).to.have.property('message').and.to.be.a('string');
+      expect(res.body).to.have.property('code').and.to.be.a('string');
     });
   });
 
@@ -19,6 +23,9 @@ describe('Send Email Queueing Test', () => {
       body: "This should fail."
     }).then((res) => {
       expect(res.status).to.eq(400);
+      expect(res.body).to.have.property('isSuccessful', false);
+      expect(res.body).to.have.property('message').and.to.match(/missing|required/i);
+      expect(res.body).to.have.property('code').and.to.be.a('string');
     });
   });
 
@@ -29,6 +36,9 @@ describe('Send Email Queueing Test', () => {
       body: "This should also fail."
     }).then((res) => {
       expect(res.status).to.eq(400);
+      expect(res.body).to.have.property('isSuccessful', false);
+      expect(res.body).to.have.property('message').and.to.match(/invalid email/i);
+      expect(res.body).to.have.property('code').and.to.be.a('string');
     });
   });
 
@@ -39,6 +49,12 @@ describe('Send Email Queueing Test', () => {
       body: "This simulates queue overload"
     }).then((res) => {
       expect([202, 503]).to.include(res.status);
+      if (res.status === 503) {
+        expect(res.body).to.have.property('isSuccessful', false);
+        expect(res.body).to.have.property('message').and.to.match(/queue full|service unavailable/i);
+        expect(res.body).to.have.property('code').and.to.be.a('string');
+      }
     });
   });
+
 });
